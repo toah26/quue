@@ -917,14 +917,14 @@
     <div class="orb-container">
       <div class="orb-core"></div>
       <div class="orb-ring orb-ring-1">
-        <div class="orb-player">ZK</div>
-        <div class="orb-player">NS</div>
+        <div class="orb-player"></div>
+        <div class="orb-player"></div>
       </div>
       <div class="orb-ring orb-ring-2">
-        <div class="orb-player">RQ</div>
-        <div class="orb-player">PX</div>
-        <div class="orb-player">VX</div>
-        <div class="orb-player">SK</div>
+        <div class="orb-player"></div>
+        <div class="orb-player"></div>
+        <div class="orb-player"></div>
+        <div class="orb-player"></div>
       </div>
     </div>
   </div>
@@ -1107,7 +1107,7 @@
     <div class="step-content active" id="step1">
       <h3 class="step-title">Create your identity</h3>
       <p class="step-sub">Your username is how other players will find and recognise you.</p>
-      <div class="form-group"><label>Username</label><input type="text" id="ob-username" placeholder="e.g. ZeroKelvin_GG"></div>
+      <div class="form-group"><label>Username</label><input type="text" id="ob-username" placeholder="e.g. YourGamertag"></div>
       <div class="form-group"><label>Region</label>
         <select id="ob-region">
           <option>EU West</option><option>EU East</option><option>NA East</option>
@@ -1391,6 +1391,7 @@
 <!-- ONBOARDING MODAL (shown after first login) -->
 <div class="modal-overlay" id="onboarding-modal" style="z-index:1100;">
   <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="document.getElementById('onboarding-modal').classList.remove('open')">✕</button>
     <h2 class="modal-title">Complete your profile</h2>
     <p class="modal-sub">Just a few details so we can find your ideal teammates.</p>
 
@@ -1481,7 +1482,7 @@
 </div>
 
 <!-- ACTIVITY FEED -->
-<div id="activity-feed"><span class="feed-dot"></span><span id="feed-text">ZeroKelvin matched with NovaSix in Counter-Strike</span></div>
+<div id="activity-feed"><span class="feed-dot"></span><span id="feed-text">Players are finding teammates right now</span></div>
 
 <!-- TOAST CONTAINER -->
 <div id="toast-container"></div>
@@ -1674,23 +1675,8 @@
   }
 
   // ── MESSAGING PANEL ──
-  const DEMO_MESSAGES = {
-    'ZeroKelvin': [
-      { from:'them', text:'Hey! Saw we matched on CS. What rank are you pushing to?' },
-      { from:'me', text:'Global Elite is the goal. You?' },
-      { from:'them', text:'Same! I play evenings mostly. Want to queue?' },
-    ],
-    'NovaSix': [
-      { from:'them', text:'Let\'s run some ranked Rocket League tonight?' },
-      { from:'me', text:'Absolutely. What rank are you?' },
-      { from:'them', text:'GC1. Need one more for a three-stack.' },
-    ],
-    'RiftQueen': [
-      { from:'them', text:'I main support, looking for a reliable carry duo.' },
-      { from:'me', text:'I can fill carry. What games do you play?' },
-      { from:'them', text:'Dota 2 mainly, sometimes Marvel Rivals.' },
-    ]
-  };
+  // No demo messages — only real conversations from matched players
+  var localMessages = {};
 
   let activeContact = null;
 
@@ -1744,7 +1730,7 @@
       const name = c.name || c;
       const preview = c.preview || 'New connection';
       const isActive = name === activeContact;
-      return '<div class="msg-contact ' + (isActive ? 'active' : '') + '" onclick="switchContact(\'' + name.replace(/'/g,\'\\'\'\') + '\')">' +
+      return '<div class="msg-contact ' + (isActive ? 'active' : '') + '" onclick="switchContact(this.dataset.name)" data-name="' + name.replace(/"/g, '&quot;') + '">' +
         '<div class="contact-avatar">' + name.slice(0,2).toUpperCase() + '</div>' +
         '<div class="contact-info">' +
           '<div class="contact-name">' + name + '</div>' +
@@ -1779,7 +1765,8 @@
     `;
   }
 
-  function switchContact(name) {
+  function switchContact(el) {
+    var name = (typeof el === 'string') ? el : el.dataset.name;
     activeContact = name;
     renderMessagingPanel();
   }
@@ -1868,7 +1855,7 @@
             '<div class="match-compat">' +
               '<span class="compat-num">' + compat + '%</span>' +
               '<div class="compat-bar"><div class="compat-fill" style="width:0%" data-w="' + compat + '"></div></div>' +
-              '<button class="connect-btn" onclick="connectPlayer(\'' + p.id + '\',\'' + (p.username||'Player').replace(/'/g,\'\\'\'\') + '\',\'' + gameId + '\')">Connect</button>' +
+              '<button class="connect-btn" onclick="connectPlayer(this)" data-id="' + p.id + '" data-name="' + (p.username||'Player').replace(/"/g,'&quot;') + '" data-game="' + gameId + '">Connect</button>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -1883,7 +1870,12 @@
       });
   }
 
-  function connectPlayer(userId, username, game) {
+  function connectPlayer(el, userId, username, game) {
+    if (el && el.dataset) {
+      userId = el.dataset.id;
+      username = el.dataset.name;
+      game = el.dataset.game;
+    }
     if (!session.user) {
       showToast('Sign in to connect with players');
       openModal('register');
@@ -2068,15 +2060,23 @@
   }
 
   async function checkProviders() {
+    // Only disable buttons if backend explicitly says provider is unavailable
+    // Default: keep all buttons enabled so users can always attempt sign-in
     try {
       const res = await fetch(`${API_BASE}/auth/providers`);
+      if (!res.ok) return;
       const data = await res.json();
-      const providerBtns = { discord:'btn-discord', google:'btn-google', riot:'btn-riot' };
-      Object.entries(providerBtns).forEach(([key, id]) => {
-        const btn = document.getElementById(id);
-        if (btn && data[key] === false) btn.disabled = true;
-      });
-    } catch(e) { /* backend offline, ignore */ }
+      // Only disable if explicitly false (not just missing/undefined)
+      if (data.discord === false) {
+        const btn = document.getElementById('btn-discord');
+        if (btn) btn.disabled = true;
+      }
+      if (data.google === false) {
+        const btn = document.getElementById('btn-google');
+        if (btn) btn.disabled = true;
+      }
+      // Riot is always shown as "soon", never disable based on backend
+    } catch(e) { /* backend offline — leave buttons enabled */ }
   }
 
   function handleSocial(provider) {
@@ -2200,10 +2200,10 @@
 
   // ── ACTIVITY FEED ──
   const FEED_ITEMS = [
-    'ZeroKelvin matched with NovaSix in Counter-Strike',
-    'RiftQueen found a Dota 2 team',
-    'PixelRush connected with 3 Fortnite players',
-    'VoxelX matched in Marvel Rivals',
+    'A new player joined Quue',
+    'Someone found their teammate in Counter-Strike',
+    'A duo connected in Rocket League',
+    'New player matched in Fortnite',
     'SkyKing found a Rocket League duo',
     'Nova_GG went pro with a Quue team',
     'MidnightRush found a 5-stack in CS'
@@ -2273,7 +2273,7 @@
         '<div class="rank-game-label">' + game + '</div>' +
         '<div class="rank-grid">' +
           ranks.map(function(r) {
-            return '<div class="rank-card" onclick="selMobRank(this,\'' + game + '\',\'' + r.name + '\')">' +
+            return '<div class="rank-card" onclick="selMobRank(this)" data-game="' + game + '" data-rank="' + r.name + '">' +
               '<div class="rank-name">' + r.name + '</div>' +
               (r.tier ? '<div class="rank-tier">' + r.tier + '</div>' : '') +
             '</div>';
@@ -2284,6 +2284,8 @@
   }
 
   function selMobRank(el, game, rank) {
+    if (!game) game = el.dataset.game;
+    if (!rank) rank = el.dataset.rank;
     el.closest('.rank-grid').querySelectorAll('.rank-card').forEach(function(c) { c.classList.remove('sel'); });
     el.classList.add('sel');
     mobRanks[game] = rank;
@@ -2354,6 +2356,14 @@
     document.getElementById('auth-modal').addEventListener('click', e => {
       if (e.target === e.currentTarget) closeModal();
     });
+
+    // Close onboarding on overlay click (optional - allow escape)
+    const onboardModal = document.getElementById('onboarding-modal');
+    if (onboardModal) {
+      onboardModal.addEventListener('click', e => {
+        if (e.target === e.currentTarget) onboardModal.classList.remove('open');
+      });
+    }
 
     // Close match popup on click
     document.getElementById('match-popup').addEventListener('click', e => {
