@@ -83,6 +83,16 @@
 
     .nav-links a:hover { color: var(--teal-bright); }
 
+    .nav-hamburger {
+      display: none;
+      flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 8px;
+    }
+    .nav-hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--teal-bright); border-radius: 2px; transition: all .3s;
+    }
+
     #nav-right {
       display: flex; align-items: center; gap: 12px;
     }
@@ -625,8 +635,6 @@
     }
 
     /* ── PRICING ── */
-    #pricing { }
-
     .pricing-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px; max-width: 900px; margin: 60px auto 0;
@@ -871,6 +879,15 @@
       .msg-layout { grid-template-columns: 1fr; height: auto; }
       nav { padding: 14px 20px; }
       .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+      .nav-links.open {
+        display: flex; flex-direction: column; gap: 20px;
+        position: absolute; top: 100%; left: 0; right: 0;
+        padding: 20px;
+        background: rgba(0,0,0,0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+      }
       section { padding: 70px 20px; }
       .orb-container { width: 320px; height: 320px; }
     }
@@ -898,6 +915,9 @@
     <button class="btn-ghost" onclick="openModal('login')">Sign in</button>
     <button class="btn-primary" onclick="openModal('register')">Play free</button>
   </div>
+  <button class="nav-hamburger" aria-label="Toggle navigation" onclick="toggleMobileNav()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- HERO -->
@@ -1014,7 +1034,6 @@
       <div class="match-filters">
         <button class="filter-btn active" onclick="setFilter(this,'all')">All Games</button>
         <button class="filter-btn" onclick="setFilter(this,'cs')">Counter-Strike</button>
-        <button class="filter-btn" onclick="setFilter(this,'val')">Valorant</button>
         <button class="filter-btn" onclick="setFilter(this,'fn')">Fortnite</button>
       </div>
       <div id="match-feed">
@@ -1665,12 +1684,24 @@
   }
 
   // ── NAV STATE ──
+  function toggleMobileNav() {
+    var links = document.querySelector('.nav-links');
+    if (links) links.classList.toggle('open');
+  }
+
+  document.querySelectorAll('.nav-links a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      var links = document.querySelector('.nav-links');
+      if (links) links.classList.remove('open');
+    });
+  });
+
   function renderNavState() {
     const navRight = document.getElementById('nav-right');
     if (!navRight) return;
 
     if (session.user) {
-      const displayName = session.user.username || session.user.email || 'Player';
+      const displayName = sanitize(session.user.username || session.user.email || 'Player');
       navRight.innerHTML = `
         <span style="font-size:14px;color:var(--text-muted)">Hey, <strong style="color:var(--teal)">${displayName}</strong></span>
         <button class="btn-ghost" onclick="handleLogout()">Log out</button>
@@ -1795,8 +1826,6 @@
     });
   }
 
-  var localMessages = {};
-
   function sendMsg() {
     const input = document.getElementById('msg-input');
     if (!input || !input.value.trim()) return;
@@ -1887,7 +1916,8 @@
       });
   }
 
-  function connectPlayer(el, userId, username, game) {
+  function connectPlayer(el) {
+    var userId, username, game;
     if (el && el.dataset) {
       userId = el.dataset.id;
       username = el.dataset.name;
@@ -1946,7 +1976,7 @@
   function setFilter(btn, filter) {
     document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
-    var gameMap = { 'all': 'Counter-Strike', 'cs': 'Counter-Strike', 'val': 'Valorant', 'fn': 'Fortnite' };
+    var gameMap = { 'all': 'Counter-Strike', 'cs': 'Counter-Strike', 'fn': 'Fortnite' };
     currentFilterGame = gameMap[filter] || filter;
     renderMatchFeed();
   }
