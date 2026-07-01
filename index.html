@@ -1491,6 +1491,18 @@
   // ── CONFIG ──
   const API_BASE = 'https://quue-backend.onrender.com';
 
+  // Sanitize any user-supplied string before inserting into innerHTML
+  function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .slice(0, 200); // hard length cap
+  }
+
   // ── GAME DATA ──
   const GAMES = [
     'Fortnite','Rust','GTA','Roblox','Minecraft',
@@ -1596,7 +1608,7 @@
     const error = params.get('error');
 
     if (error) {
-      showToast(decodeURIComponent(error));
+      showToast(sanitize(decodeURIComponent(error)).slice(0,100));
       history.replaceState(null, '', window.location.pathname);
       return;
     }
@@ -1605,9 +1617,13 @@
       session.token = token;
       history.replaceState(null, '', window.location.pathname);
 
-      // Decode user from JWT immediately so UI updates fast
+      // Decode JWT for display only — signature is verified by the backend on every API call
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
+        const parts = token.split('.');
+        if (parts.length !== 3) throw new Error('Invalid token structure');
+        const payload = JSON.parse(atob(parts[1]));
+        // Validate expiry client-side as a UX hint (not a security check)
+        if (payload.exp && payload.exp * 1000 < Date.now()) throw new Error('Token expired');
         session.user = {
           id: payload.sub,
           username: payload.username,
@@ -1618,7 +1634,7 @@
         renderNavState();
         renderMessagingPanel();
         closeModal();
-        showToast('Welcome, ' + (session.user.username || session.user.email) + '!');
+        showToast('Welcome, ' + sanitize(session.user.username || session.user.email) + '!');
       } catch(e) {
         showToast('Signed in successfully!');
         closeModal();
@@ -1733,7 +1749,7 @@
       return '<div class="msg-contact ' + (isActive ? 'active' : '') + '" onclick="switchContact(this.dataset.name)" data-name="' + name.replace(/"/g, '&quot;') + '">' +
         '<div class="contact-avatar">' + name.slice(0,2).toUpperCase() + '</div>' +
         '<div class="contact-info">' +
-          '<div class="contact-name">' + name + '</div>' +
+          '<div class="contact-name">' + sanitize(name) + '</div>' +
           '<div class="contact-preview">' + preview + '</div>' +
         '</div>' +
       '</div>';
@@ -1784,7 +1800,8 @@
   function sendMsg() {
     const input = document.getElementById('msg-input');
     if (!input || !input.value.trim()) return;
-    const text = input.value.trim();
+    const text = input.value.trim().slice(0, 500); // cap at 500 chars
+    if (!text) return;
     input.value = '';
 
     if (!localMessages[activeContact]) localMessages[activeContact] = [];
@@ -1793,7 +1810,7 @@
     const body = document.getElementById('msg-body');
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble me';
-    bubble.textContent = text;
+    bubble.textContent = text; // textContent auto-escapes, never use innerHTML for messages
     body.appendChild(bubble);
     body.scrollTop = body.scrollHeight;
 
@@ -1838,17 +1855,17 @@
         }
         feed.innerHTML = matches.map(function(m) {
           var p = m.user;
-          var initials = (p.username || 'PL').slice(0,2).toUpperCase();
-          var rank = p.rankTier || '';
-          var region = p.region || '';
+          var initials = sanitize(p.username || 'PL').slice(0,2).toUpperCase();
+          var rank = sanitize(p.rankTier || '');
+          var region = sanitize(p.region || '');
           var compat = Math.round(m.compatScore) || 80;
           return '<div class="match-card">' +
             '<div class="match-avatar">' + initials + '</div>' +
             '<div class="match-info">' +
-              '<div class="match-name">' + (p.username || 'Player') + '</div>' +
+              '<div class="match-name">' + sanitize(p.username || 'Player') + '</div>' +
               '<div style="font-size:12px;color:var(--text-muted)">' + region + '</div>' +
               '<div class="match-tags">' +
-                '<span class="match-tag">' + gameId + '</span>' +
+                '<span class="match-tag">' + sanitize(gameId) + '</span>' +
                 (rank ? '<span class="match-tag">' + rank + '</span>' : '') +
               '</div>' +
             '</div>' +
