@@ -1509,11 +1509,12 @@ const session = {
   }
   if (token) {
     session.accessToken = token;
+    renderNav();
     fetchAndStoreProfile().then(() => {
-      showToast('Signed in');
-      openModal('register');
+      renderNav();
+      renderMatchFeed();
       const user = session.user;
-      showSuccess(user?.username || 'Player');
+      showToast('Welcome, ' + ((user && (user.username || user.email)) || 'Player') + '!');
     });
   }
 })();
@@ -1534,6 +1535,25 @@ async function fetchAndStoreProfile(){
 }
 
 /* ── UTILS ── */
+function renderNav(){
+  var el = document.getElementById('navRight');
+  if(!el) return;
+  var user = session.user;
+  var token = session.accessToken;
+  if(user && token){
+    var name = String(user.username || user.email || 'Player').replace(/</g,'&lt;');
+    el.innerHTML = '<span style="font-size:13px;color:var(--sub)">Hey, <strong style="color:var(--teal)">' + name + '</strong></span><button class="btn-ghost" onclick="handleLogout()">Log out</button>';
+  } else {
+    el.innerHTML = '<button class="btn-ghost" onclick="openModal(\'login\')">Sign in</button><button class="btn-cta" onclick="openModal(\'register\')">Play free →</button>';
+  }
+}
+function handleLogout(){
+  session.accessToken = null;
+  session.user = null;
+  renderNav();
+  renderMatchFeed();
+  showToast('Signed out!');
+}
 function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
 
 let toastTimer;
@@ -1681,6 +1701,7 @@ async function handleRegister(){
 
     session.accessToken = data.accessToken;
     session.user = data.user;
+    renderNav();
     showSuccess(data.user.username);
   } catch (err) {
     console.error('[register]', err);
@@ -1715,6 +1736,7 @@ async function handleLogin(){
 
     session.accessToken = data.accessToken;
     session.user = data.user;
+    renderNav();
     showSuccess(data.user.username);
   } catch (err) {
     console.error('[login]', err);
@@ -1739,7 +1761,7 @@ function connectPlayer(el) {
   var userId = el.dataset ? el.dataset.id : el;
   var username = el.dataset ? el.dataset.name : el;
   var game = el.dataset ? el.dataset.game : 'Counter-Strike';
-  var token = window.SESSION && window.SESSION.token;
+  var token = session.accessToken;
 
   if (!token) { showToast('Sign in to connect with players'); return; }
 
@@ -1776,7 +1798,7 @@ function renderMatchFeed() {
   var feed = document.getElementById('match-feed');
   var title = document.getElementById('feed-title');
   if (!feed) return;
-  var token = window.SESSION && window.SESSION.token;
+  var token = session.accessToken;
   if (!token) {
     feed.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Sign in to see real players.</div>';
     return;
@@ -1829,7 +1851,7 @@ function renderMatchFeed() {
 window.currentFilterGame = 'Counter-Strike';
 
 function handleUpgrade(plan) {
-  var token = window.SESSION && window.SESSION.token;
+  var token = session.accessToken;
   if (!token) { showToast('Please sign in first to upgrade.'); return; }
   fetch(API_BASE + '/billing/checkout', {
     method: 'POST',
@@ -3523,11 +3545,12 @@ const session = {
   }
   if (token) {
     session.accessToken = token;
+    renderNav();
     fetchAndStoreProfile().then(() => {
-      showToast('Signed in');
-      openModal('register');
+      renderNav();
+      renderMatchFeed();
       const user = session.user;
-      showSuccess(user?.username || 'Player');
+      showToast('Welcome, ' + ((user && (user.username || user.email)) || 'Player') + '!');
     });
   }
 })();
@@ -3695,6 +3718,7 @@ async function handleRegister(){
 
     session.accessToken = data.accessToken;
     session.user = data.user;
+    renderNav();
     showSuccess(data.user.username);
   } catch (err) {
     console.error('[register]', err);
@@ -3729,6 +3753,7 @@ async function handleLogin(){
 
     session.accessToken = data.accessToken;
     session.user = data.user;
+    renderNav();
     showSuccess(data.user.username);
   } catch (err) {
     console.error('[login]', err);
@@ -3753,7 +3778,7 @@ function connectPlayer(el) {
   var userId = el.dataset ? el.dataset.id : el;
   var username = el.dataset ? el.dataset.name : el;
   var game = el.dataset ? el.dataset.game : 'Counter-Strike';
-  var token = window.SESSION && window.SESSION.token;
+  var token = session.accessToken;
 
   if (!token) { showToast('Sign in to connect with players'); return; }
 
