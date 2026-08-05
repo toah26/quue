@@ -1203,7 +1203,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
             <div class="cbl-val">✓</div>
           </div>
         </div>
-        <button class="btn-primary" onclick="openModal('register')">See my matches</button>
+        <button class="btn-primary" onclick="session.accessToken ? scrollToId('matchmaking') : openModal('register')">See my matches</button>
       </div>
     </div>
   </div>
@@ -1331,7 +1331,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
           <li>Standard messaging</li>
           <li>EU & NA regions</li>
         </ul>
-        <button class="price-btn" onclick="openModal('register')">Get started free</button>
+        <button class="price-btn" onclick="session.accessToken ? scrollToId('matchmaking') : openModal('register')">Get started free</button>
       </div>
       <div class="price-card featured">
         <div class="price-popular">Most popular</div>
@@ -1346,7 +1346,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
           <li>Full compatibility breakdown</li>
           <li>Advanced filters</li>
         </ul>
-        <button class="price-btn" onclick="openModal('register')">Start Pro →</button>
+        <button class="price-btn" onclick="session.accessToken ? handleUpgrade('pro') : openModal('register')">Start Pro →</button>
       </div>
       <div class="price-card">
         <div class="price-plan">Team</div>
@@ -1359,7 +1359,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
           <li>Team analytics</li>
           <li>Custom team branding</li>
         </ul>
-        <button class="price-btn" onclick="openModal('register')">Start Team</button>
+        <button class="price-btn" onclick="session.accessToken ? handleUpgrade('team') : openModal('register')">Start Team</button>
       </div>
     </div>
   </div>
@@ -1538,7 +1538,13 @@ function renderNav(){
   var user=session.user, token=session.accessToken;
   if(user&&token){
     var name=String(user.username||user.email||'Player').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    el.innerHTML='<span style="font-size:13px;color:var(--sub)">Hey, <strong style="color:var(--teal)">'+name+'</strong></span><button class="btn-ghost" onclick="handleLogout()">Log out</button>';
+    el.innerHTML=
+      '<span style="font-size:13px;color:var(--sub)">Hey, <strong style="color:var(--teal)">'+name+'</strong></span>' +
+      '<button class="btn-ghost" onclick="openProfileModal()" style="display:flex;align-items:center;gap:6px;">'+
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>'+
+        'Profile'+
+      '</button>'+
+      '<button class="btn-ghost" onclick="handleLogout()">Log out</button>';
   }else{
     el.innerHTML='<button class="btn-ghost" onclick="openModal(&quot;login&quot;)">Sign in</button><button class="btn-cta" onclick="openModal(&quot;register&quot;)">Play free →</button>';
   }
@@ -1552,6 +1558,95 @@ function handleUpgrade(plan){
   .then(function(d){if(d&&d.url){window.location.href=d.url;}else{showToast('Billing coming soon!');}})
   .catch(function(){showToast('Billing coming soon!');});
 }
+
+function openProfileModal(){
+  var existing = document.getElementById('profile-modal');
+  if(existing){ existing.style.display='flex'; return; }
+  var user = session.user;
+  if(!user) return;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'profile-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.style.display='none'; };
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#0A1A18;border:1px solid rgba(0,196,179,0.3);border-radius:20px;padding:40px;width:100%;max-width:480px;position:relative;';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&#x2715;';
+  closeBtn.style.cssText = 'position:absolute;top:14px;right:14px;background:none;border:none;color:#6B9994;font-size:20px;cursor:pointer;';
+  closeBtn.onclick = function(){ overlay.style.display='none'; };
+  box.appendChild(closeBtn);
+
+  var name = String(user.username||user.email||'Player').replace(/</g,'&lt;');
+  var email = String(user.email||'').replace(/</g,'&lt;');
+
+  var header = document.createElement('div');
+  header.style.cssText = 'text-align:center;margin-bottom:28px;';
+  header.innerHTML = '<div style="width:72px;height:72px;border-radius:50%;background:rgba(0,196,179,0.15);border:2px solid rgba(0,196,179,0.4);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:28px;font-weight:800;color:#00C4B3;margin:0 auto 12px;">' + name.slice(0,1).toUpperCase() + '</div>';
+  var h2 = document.createElement('h2');
+  h2.style.cssText = 'font-family:Georgia,serif;font-size:22px;color:#E8F5F4;margin-bottom:4px;';
+  h2.textContent = name;
+  var emailEl = document.createElement('p');
+  emailEl.style.cssText = 'font-size:13px;color:#6B9994;';
+  emailEl.textContent = email;
+  header.appendChild(h2);
+  header.appendChild(emailEl);
+  box.appendChild(header);
+
+  var loading = document.createElement('p');
+  loading.style.cssText = 'text-align:center;color:#6B9994;font-size:13px;margin-bottom:20px;';
+  loading.textContent = 'Loading profile…';
+  box.appendChild(loading);
+
+  var btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:10px;margin-top:20px;';
+  var closeBtn2 = document.createElement('button');
+  closeBtn2.style.cssText = 'flex:1;padding:12px;border-radius:10px;border:1px solid rgba(0,196,179,0.3);background:none;color:#6B9994;cursor:pointer;font-size:14px;font-family:inherit;';
+  closeBtn2.textContent = 'Close';
+  closeBtn2.onclick = function(){ overlay.style.display='none'; };
+  var logoutBtn = document.createElement('button');
+  logoutBtn.style.cssText = 'padding:12px 20px;border-radius:10px;border:none;background:rgba(255,75,110,0.15);color:#FF4B6E;cursor:pointer;font-size:14px;font-family:inherit;';
+  logoutBtn.textContent = 'Log out';
+  logoutBtn.onclick = function(){ overlay.style.display='none'; handleLogout(); };
+  btns.appendChild(closeBtn2);
+  btns.appendChild(logoutBtn);
+  box.appendChild(btns);
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  fetch(API_BASE+'/profiles/me', {headers:{'Authorization':'Bearer '+session.accessToken}})
+  .then(function(r){return r.ok?r.json():null;})
+  .then(function(data){
+    loading.remove();
+    var info = document.createElement('div');
+    info.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:20px;';
+    var rows = [
+      ['Region', (data&&data.region)||'Not set'],
+      ['Age', (data&&data.age)||'Not set'],
+      ['Playstyle', (data&&data.playstyle)||'Not set'],
+      ['Plan', (data&&data.plan)||'free'],
+      ['Games', (data&&data.games&&data.games.length)?data.games.map(function(g){return g.game+(g.rank?' · '+g.rank:'');}).join(', '):'Not set']
+    ];
+    rows.forEach(function(row){
+      var r = document.createElement('div');
+      r.style.cssText = 'display:flex;justify-content:space-between;padding:10px 14px;background:#071310;border-radius:10px;border:1px solid rgba(0,196,179,0.1);';
+      var label = document.createElement('span');
+      label.style.cssText = 'font-size:13px;color:#6B9994;';
+      label.textContent = row[0];
+      var val = document.createElement('span');
+      val.style.cssText = 'font-size:13px;color:#E8F5F4;font-weight:600;text-align:right;max-width:60%;';
+      val.textContent = String(row[1]);
+      r.appendChild(label); r.appendChild(val);
+      info.appendChild(r);
+    });
+    box.insertBefore(info, btns);
+  })
+  .catch(function(){ loading.textContent = 'Could not load profile data.'; });
+}
+
 function renderMatchFeed(){
   var feed=document.getElementById('match-feed');
   if(!feed)return;
