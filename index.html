@@ -954,7 +954,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
         Quue matches you with players at your exact rank, in your region, with your playstyle. No randoms. No noise. Just the right teammate.
       </p>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="openModal('register')">Find my teammate</button>
+        <button class="btn-primary" onclick="session.accessToken ? (closeModal(), scrollToId('matchmaking')) : openModal('register')">Find my teammate</button>
         <button class="btn-secondary" onclick="scrollToId('matchmaking')">See how it works</button>
       </div>
       <div class="hero-trust">
@@ -1392,7 +1392,7 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
         <p>42,000 players are already finding their perfect teammates on Quue. You're next.</p>
       </div>
       <div class="cta-right">
-        <button class="btn-primary" style="font-size:16px;padding:16px 36px;" onclick="openModal('register')">Find my teammate — free</button>
+        <button class="btn-primary" style="font-size:16px;padding:16px 36px;" onclick="session.accessToken ? scrollToId('matchmaking') : openModal('register')">Find my teammate — free</button>
         <div class="cta-small">No credit card · Setup in 3 min · Cancel anytime</div>
       </div>
     </div>
@@ -1507,10 +1507,10 @@ const session = {
     session.accessToken = token;
     renderNav();
     fetchAndStoreProfile().then(() => {
-      showToast('Signed in');
-      openModal('register');
+      renderNav();
+      renderMatchFeed();
       const user = session.user;
-      showSuccess(user?.username || 'Player');
+      showToast('Welcome, ' + ((user && (user.username || user.email)) || 'Player') + '!');
     });
   }
 })();
@@ -1768,15 +1768,32 @@ async function handleLogin(){
   }
 }
 function showSuccess(name){
-  document.getElementById('modalContent').innerHTML=`
-    <div style="text-align:center;padding:20px 0;">
-      <div class="match-icon" style="margin:0 auto 16px;">✓</div>
-      <h2 style="margin-bottom:8px;">You're in, ${name}</h2>
-      <p class="modal-sub">Account created. Let's calibrate your profile.</p>
-      <button class="form-btn" onclick="closeModal();setStep(0);scrollToId('platform');">Set up my profile →</button>
-      <div class="form-security" style="margin-top:16px;"><span>✓</span> Account secured · Check email to verify</div>
-    </div>
-  `;
+  renderMatchFeed();
+  var safeName = String(name||'Player').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var mc = document.getElementById('modalContent');
+  mc.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'text-align:center;padding:20px 0;';
+  var icon = document.createElement('div');
+  icon.className = 'match-icon';
+  icon.style.cssText = 'margin:0 auto 16px;';
+  icon.textContent = '✓';
+  var h2 = document.createElement('h2');
+  h2.style.marginBottom = '8px';
+  h2.textContent = 'You’re in, ' + safeName + '!';
+  var p = document.createElement('p');
+  p.className = 'modal-sub';
+  p.textContent = 'Your teammates are waiting.';
+  var btn = document.createElement('button');
+  btn.className = 'form-btn';
+  btn.style.marginTop = '20px';
+  btn.textContent = 'Find my teammate →';
+  btn.onclick = function(){ closeModal(); scrollToId('matchmaking'); };
+  wrap.appendChild(icon);
+  wrap.appendChild(h2);
+  wrap.appendChild(p);
+  wrap.appendChild(btn);
+  mc.appendChild(wrap);
 }
 
 /* ── CONNECT PLAYER ── */
