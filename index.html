@@ -87,6 +87,25 @@ nav.scrolled { background: rgba(3,13,12,0.95); }
 }
 .nav-links a:hover { color: var(--text); }
 .nav-right { display:flex; gap:10px; align-items:center; }
+.nav-hamburger {
+  display:none; flex-direction:column; gap:5px; cursor:pointer;
+  background:none; border:none; padding:4px;
+}
+.nav-hamburger span {
+  display:block; width:22px; height:2px;
+  background:var(--text); border-radius:2px; transition:all .2s;
+}
+.nav-mobile-menu {
+  display:none; position:fixed; top:56px; left:0; right:0;
+  background:#0A1A18; border-bottom:1px solid var(--border);
+  padding:16px; flex-direction:column; gap:0; z-index:999;
+}
+.nav-mobile-menu a {
+  padding:14px 0; border-bottom:1px solid var(--border);
+  font-size:15px; color:var(--sub); display:block;
+}
+.nav-mobile-menu a:last-child { border-bottom:none; }
+.nav-mobile-menu.open { display:flex; }
 .btn-ghost {
   background: transparent; border: 1px solid var(--border2);
   color: var(--sub); padding: 8px 18px; border-radius: 8px;
@@ -912,17 +931,113 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
   .newsletter-inner { flex-direction:column; align-items:flex-start; }
 }
 @media(max-width:640px){
+  /* Nav */
+  nav { padding:0 16px; height:56px; }
   nav .nav-links { display:none; }
+  .nav-hamburger { display:flex; }
+  #navRight .btn-ghost, #navRight .btn-cta { display:none; }
+  nav .nav-right { gap:6px; }
+  nav .nav-right button { font-size:12px; padding:6px 12px; }
+  nav .nav-right span { display:none; }
+
+  /* Hero */
+  .hero { padding:80px 0 40px; }
+  .hero-inner { padding:0 16px; }
+  .hero h1 { font-size:clamp(36px,9vw,56px); letter-spacing:-1.5px; line-height:1.1; }
+  .hero-sub { font-size:14px; }
+  .hero-cta { flex-direction:column; gap:10px; }
+  .hero-cta button { width:100%; text-align:center; }
+
+  /* Stats */
   .stats-bar { grid-template-columns:1fr 1fr; }
-  .stat-cell { border-bottom:1px solid var(--border); }
-  .features-grid { grid-template-columns:1fr; }
-  .footer-grid { grid-template-columns:1fr; }
-  .cta-banner { padding:32px 24px; }
-  .rank-grid { grid-template-columns:repeat(4,1fr); }
+  .stat-cell { border-bottom:1px solid var(--border); padding:16px; }
+  .stat-num { font-size:28px; }
+
+  /* Sections */
+  .section { padding:48px 0; }
+  .section-inner { padding:0 16px; }
+  .section-title { font-size:clamp(24px,6vw,36px); }
+
+  /* Features */
+  .features-grid { grid-template-columns:1fr; gap:12px; }
+  .feat-card { padding:20px; }
+
+  /* Match panel */
+  .match-ui-panel { padding:16px; border-radius:16px; }
+  .mup-title { font-size:12px; }
+  .mr-name { font-size:14px; }
+  .mr-pct { font-size:20px; }
+  .conn-btn { font-size:11px; padding:6px 12px; }
+
+  /* Messaging */
+  .msg-panel { height:360px; }
+  .msg-contacts { width:100%; max-width:100%; border-right:none; border-bottom:1px solid var(--border); }
+
+  /* Onboarding */
+  .ob-num { font-size:36px; }
+  .game-tile { width:52px; height:64px; }
+  .game-tile-glyph { width:28px; height:28px; font-size:13px; }
+  .rank-grid { grid-template-columns:repeat(3,1fr); gap:6px; }
+  .rank-btn { padding:8px 6px; font-size:11px; }
+
+  /* Pricing */
+  .pricing-grid { grid-template-columns:1fr; gap:12px; }
+  .price-card { padding:24px 20px; }
+  .price-amount .number { font-size:40px; }
+
+  /* Trust */
+  .trust-grid { grid-template-columns:1fr; }
+  .ta-card { padding:20px; }
+
+  /* Press */
+  .press-row { gap:16px; flex-wrap:wrap; }
+  .press-logo { font-size:14px; padding:8px 14px; }
+
+  /* Newsletter */
+  .newsletter-section { padding:32px 16px; }
+  .newsletter-inner { flex-direction:column; gap:20px; }
+  .nl-text h2 { font-size:22px; }
+  .nl-form { width:100%; flex-direction:column; gap:8px; }
+  .nl-input { width:100%; min-width:0; border-radius:10px; }
+  .nl-btn { width:100%; border-radius:10px; }
+
+  /* CTA */
+  .cta-section { padding:32px 16px; }
+  .cta-banner { padding:28px 20px; flex-direction:column; gap:20px; border-radius:16px; }
+  .cta-banner h2 { font-size:24px; }
+  .cta-right button { width:100%; }
+
+  /* Footer */
+  .footer-grid { grid-template-columns:1fr; gap:24px; }
+  footer { padding:40px 16px 24px; }
+  .footer-bottom { flex-direction:column; gap:8px; text-align:center; }
+
+  /* Modal */
+  .modal { padding:28px 20px; border-radius:16px; margin:8px; }
+  .modal-title { font-size:20px; }
+
+  /* Toast */
+  .toast { max-width:calc(100vw - 32px); right:16px; bottom:16px; font-size:13px; }
+
+  /* Cookie banner */
+  #cookie-banner { padding:14px 16px; flex-direction:column; gap:12px; align-items:flex-start; }
+  #cookie-banner > div:last-child { width:100%; display:flex; gap:8px; }
+  #cookie-banner button { flex:1; }
+
+  /* Legal modal */
+  #legal-modal > div { border-radius:12px; max-height:92vh; }
+  #legal-modal > div > div:last-child { padding:16px 20px 24px; }
+
+  /* Hero h1 */
   .hero h1 { letter-spacing:-1.5px; }
   .press-row { gap:20px; }
-  .nl-form { width:100%; }
-  .nl-input { width:100%; min-width:0; }
+}
+
+@media(max-width:400px){
+  .hero h1 { font-size:32px; }
+  nav .nav-right .btn-ghost { display:none; }
+  .stat-num { font-size:24px; }
+  .rank-grid { grid-template-columns:repeat(2,1fr); }
 }
 </style>
 <body>
@@ -942,8 +1057,19 @@ footer { background: var(--deep); border-top: 1px solid var(--border); padding: 
   <div class="nav-right" id="navRight">
     <button class="btn-ghost" onclick="openModal('login')">Sign in</button>
     <button class="btn-cta" onclick="openModal('register')">Play free →</button>
+
   </div>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a onclick="scrollToId('features');toggleMobileMenu()">Features</a>
+  <a onclick="scrollToId('matchmaking');toggleMobileMenu()">Matchmaking</a>
+  <a onclick="scrollToId('pricing');toggleMobileMenu()">Pricing</a>
+  <a onclick="scrollToId('platform');toggleMobileMenu()">How it works</a>
+  <a onclick="openModal('login');toggleMobileMenu()" style="color:var(--teal);">Sign in</a>
+  <a onclick="openModal('register');toggleMobileMenu()" style="color:var(--teal);font-weight:700;">Play free →</a>
+</div>
 
 <!-- ═══ HERO ═══ -->
 <div class="hero" id="home">
@@ -1589,6 +1715,8 @@ function renderNav(){
   var el=document.getElementById('navRight');
   if(!el)return;
   var user=session.user, token=session.accessToken;
+  // Always keep the hamburger button at the end
+  var hamburger='<button class="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu"><span></span><span></span><span></span></button>';
   if(user&&token){
     var name=String(user.username||user.email||'Player').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     el.innerHTML=
@@ -1597,9 +1725,10 @@ function renderNav(){
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>'+
         'Profile'+
       '</button>'+
-      '<button class="btn-ghost" onclick="handleLogout()">Log out</button>';
+      '<button class="btn-ghost" onclick="handleLogout()">Log out</button>'+
+      hamburger;
   }else{
-    el.innerHTML='<button class="btn-ghost" onclick="openModal(&quot;login&quot;)">Sign in</button><button class="btn-cta" onclick="openModal(&quot;register&quot;)">Play free →</button>';
+    el.innerHTML='<button class="btn-ghost" onclick="openModal(&quot;login&quot;)">Sign in</button><button class="btn-cta" onclick="openModal(&quot;register&quot;)">Play free →</button>'+hamburger;
   }
 }
 function handleLogout(){session.accessToken=null;session.user=null;renderNav();renderMatchFeed();showToast('Signed out!');}
@@ -1850,6 +1979,10 @@ function renderMatchFeed(){
 }
 window.currentFilterGame='Counter-Strike';
 var activeConv=null;
+function toggleMobileMenu(){
+  var m=document.getElementById('mobileMenu');
+  if(m)m.classList.toggle('open');
+}
 function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
 
 let toastTimer;
@@ -2287,15 +2420,19 @@ function selRank(el, game, rank){
 
 /* ── SECURITY ── */
 // Prevent clickjacking
-if (window.top !== window.self) { window.top.location = window.self.location; }
+try { if (window.top !== window.self) { window.top.location = window.self.location; } } catch(e) {}
 // Prevent sensitive data in URL
 if (window.location.search.includes('token') || window.location.search.includes('password')) {
   history.replaceState(null, '', window.location.pathname);
 }
 
 /* ── INIT ── */
-setStep(0);
-renderMsgs('ZeroKelvin');
+document.addEventListener('DOMContentLoaded', function(){
+  setStep(0);
+  renderNav();
+  renderMatchFeed();
+  fetch(API_BASE+'/health').catch(function(){});
+});
 </script>
 
 <!-- COOKIE BANNER -->
