@@ -1789,7 +1789,7 @@ function handleEnterprise(){
 
 function openProfileModal(){
   var existing = document.getElementById('profile-modal');
-  if(existing){ existing.style.display='flex'; return; }
+  if(existing){ existing.remove(); } // always recreate to get fresh data
   var user = session.user;
   if(!user) return;
 
@@ -2522,6 +2522,67 @@ document.addEventListener('DOMContentLoaded', function(){
   renderMatchFeed();
   fetch(API_BASE+'/health').catch(function(){});
 });
+
+// ── COOKIE CONSENT ──
+(function(){
+  var b = document.getElementById('cookie-banner');
+  if(!b) return;
+  if(localStorage.getItem('quue_cookie_consent')){
+    b.style.display = 'none';
+  } else {
+    setTimeout(function(){
+      b.style.transform = 'translateY(0)';
+    }, 1000);
+  }
+})();
+
+function cookieChoice(all){
+  localStorage.setItem('quue_cookie_consent', all ? 'all' : 'essential');
+  var b = document.getElementById('cookie-banner');
+  if(b){ b.style.transform = 'translateY(100%)'; }
+  showToast(all ? 'Preferences saved!' : 'Essential cookies only. Got it!');
+}
+
+function openLegal(page){
+  var m = document.getElementById('legal-modal');
+  var t = document.getElementById('legal-title');
+  var b = document.getElementById('legal-body');
+  if(!m||!t||!b) return;
+  var L = {
+    privacy: {
+      title: 'Privacy Policy',
+      body: '<p><strong style="color:#E8F5F4">Last updated: August 2026</strong></p><h3 style="color:#00C4B3;margin:20px 0 8px;">Who we are</h3><p>Quue is a gaming teammate matchmaking platform. We are committed to protecting your personal data under GDPR. Contact: <a href="mailto:hello@quue.gg" style="color:#00C4B3;">hello@quue.gg</a></p><h3 style="color:#00C4B3;margin:20px 0 8px;">Data we collect</h3><ul style="margin:8px 0 8px 20px;display:flex;flex-direction:column;gap:6px;"><li>Account: email, username, avatar</li><li>Profile: age, region, games, ranks, playstyle</li><li>Usage: matchmaking history, connections, messages</li><li>Technical: IP address, session tokens</li></ul><h3 style="color:#00C4B3;margin:20px 0 8px;">How we use it</h3><p>To provide matchmaking, authenticate accounts, calculate compatibility, and improve the platform. We do <strong style="color:#E8F5F4">not</strong> sell your data or serve ads.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Your GDPR rights</h3><p>Access, correct, delete, object, portability. Email <a href="mailto:hello@quue.gg" style="color:#00C4B3;">hello@quue.gg</a> to exercise any right. We will respond within 30 days.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Data retention</h3><p>Retained while your account is active. Deleted within 30 days of an account deletion request.</p>'
+    },
+    terms: {
+      title: 'Terms of Service',
+      body: '<p><strong style="color:#E8F5F4">Last updated: August 2026</strong></p><h3 style="color:#00C4B3;margin:20px 0 8px;">Eligibility</h3><p>You must be 13 or older to use Quue. By creating an account you confirm you meet this requirement.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Acceptable use</h3><p>No harassment, fake ranks, scraping, or commercial solicitation. Violations result in immediate account suspension.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Billing</h3><p>Pro (€9.99/mo) and Team (€19.99/mo) plans are billed monthly via Stripe. Cancel anytime. Refunds within 7 days if unused.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Disclaimers</h3><p>Service provided as-is. We are not liable for other users’ behaviour. Maximum liability: amount paid in prior 12 months.</p><h3 style="color:#00C4B3;margin:20px 0 8px;">Contact</h3><p><a href="mailto:hello@quue.gg" style="color:#00C4B3;">hello@quue.gg</a></p>'
+    },
+    cookies: {
+      title: 'Cookie Policy',
+      body: '<p><strong style="color:#E8F5F4">Last updated: August 2026</strong></p><p style="margin-bottom:16px;">We use only essential cookies. No advertising, no tracking, no third-party cookies.</p><table style="width:100%;border-collapse:collapse;"><thead><tr><th style="text-align:left;padding:8px 6px;color:#E8F5F4;font-size:12px;border-bottom:1px solid rgba(0,196,179,0.2);">Cookie</th><th style="text-align:left;padding:8px 6px;color:#E8F5F4;font-size:12px;border-bottom:1px solid rgba(0,196,179,0.2);">Purpose</th><th style="text-align:left;padding:8px 6px;color:#E8F5F4;font-size:12px;border-bottom:1px solid rgba(0,196,179,0.2);">Duration</th></tr></thead><tbody><tr><td style="padding:8px 6px;font-family:monospace;color:#00C4B3;font-size:12px;">quue_access_token</td><td style="padding:8px 6px;font-size:13px;">Keeps you signed in</td><td style="padding:8px 6px;font-size:13px;">15 min</td></tr><tr><td style="padding:8px 6px;font-family:monospace;color:#00C4B3;font-size:12px;">quue_user</td><td style="padding:8px 6px;font-size:13px;">Caches your profile</td><td style="padding:8px 6px;font-size:13px;">Session</td></tr><tr><td style="padding:8px 6px;font-family:monospace;color:#00C4B3;font-size:12px;">quue_cookie_consent</td><td style="padding:8px 6px;font-size:13px;">Stores your cookie choice</td><td style="padding:8px 6px;font-size:13px;">1 year</td></tr><tr><td style="padding:8px 6px;font-family:monospace;color:#00C4B3;font-size:12px;">refresh_token</td><td style="padding:8px 6px;font-size:13px;">Secure session renewal (httpOnly)</td><td style="padding:8px 6px;font-size:13px;">30 days</td></tr></tbody></table><div style="margin-top:20px;display:flex;gap:10px;"><button onclick="cookieChoice(false);closeLegal();" style="padding:10px 18px;border-radius:8px;border:1px solid rgba(0,196,179,0.3);background:none;color:#6B9994;cursor:pointer;font-size:13px;font-family:inherit;">Essential only</button><button onclick="cookieChoice(true);closeLegal();" style="padding:10px 18px;border-radius:8px;border:none;background:#00C4B3;color:#000;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;">Accept all</button></div>'
+    },
+    security: {
+      title: 'Security Policy',
+      body: '<p><strong style="color:#E8F5F4">Last updated: August 2026</strong></p><ul style="margin:8px 0 8px 20px;display:flex;flex-direction:column;gap:10px;"><li><strong style="color:#E8F5F4">TLS 1.2+:</strong> All traffic encrypted in transit</li><li><strong style="color:#E8F5F4">bcrypt:</strong> Passwords hashed with cost factor 12</li><li><strong style="color:#E8F5F4">JWT:</strong> Access tokens expire in 15 minutes, refresh tokens rotate on use</li><li><strong style="color:#E8F5F4">OAuth:</strong> PKCE-protected state parameters prevent CSRF attacks</li><li><strong style="color:#E8F5F4">Rate limiting:</strong> 10 login attempts per 15 minutes per IP</li><li><strong style="color:#E8F5F4">Input validation:</strong> All profile fields validated and sanitized server-side</li><li><strong style="color:#E8F5F4">XSS protection:</strong> All user content sanitized before rendering</li></ul><h3 style="color:#00C4B3;margin:20px 0 8px;">Report a vulnerability</h3><p>Email <a href="mailto:security@quue.gg" style="color:#00C4B3;">security@quue.gg</a>. We respond within 48 hours.</p>'
+    }
+  };
+  if(!L[page]) return;
+  t.textContent = L[page].title;
+  b.innerHTML = L[page].body;
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLegal(){
+  var m = document.getElementById('legal-modal');
+  if(m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeLegal();
+});
+
 </script>
 
 <!-- COOKIE BANNER -->
