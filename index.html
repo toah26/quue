@@ -2517,6 +2517,7 @@ if (window.location.search.includes('token') || window.location.search.includes(
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', function(){
+  initCookieBanner();
   setStep(0);
   renderNav();
   renderMatchFeed();
@@ -2524,7 +2525,8 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 // ── COOKIE CONSENT ──
-(function(){
+// Init runs after DOM ready since banner HTML is after the script tag
+function initCookieBanner(){
   var b = document.getElementById('cookie-banner');
   if(!b) return;
   if(localStorage.getItem('quue_cookie_consent')){
@@ -2534,7 +2536,7 @@ document.addEventListener('DOMContentLoaded', function(){
       b.style.transform = 'translateY(0)';
     }, 1000);
   }
-})();
+}
 
 function cookieChoice(all){
   localStorage.setItem('quue_cookie_consent', all ? 'all' : 'essential');
